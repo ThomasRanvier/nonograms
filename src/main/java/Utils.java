@@ -52,7 +52,7 @@ public class Utils {
                 }
                 columnsConstraints[x] = columnC;
             }
-            //System.out.println(line);
+            System.out.println(line);
         }
 
         int[][][] constraints = new int[][][]{linesConstraints, columnsConstraints};

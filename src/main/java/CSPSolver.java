@@ -51,7 +51,7 @@ public class CSPSolver {
         model.regular(cells, auto).post();
     }
 
-    public static void cspMethod(String method, int width, int height, int[][][] constraints) {
+    public static boolean cspMethod(String method, int width, int height, int[][][] constraints) {
         Model model = new Model("Nonogram");
         BoolVar[][] cells = model.boolVarMatrix("c", height, width);
         for (int i = 0; i < height; i++) {
@@ -69,8 +69,10 @@ public class CSPSolver {
             }
         }
         if(model.getSolver().solve()){
-            displayResult(cells);
+            //displayResult(cells);
+            return true;
         }
+        return false;
     }
 
     private static void displayResult(BoolVar[][] cells) {
