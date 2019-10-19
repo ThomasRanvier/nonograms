@@ -54,6 +54,7 @@ public class CSPSolver {
     public static boolean cspMethod(String method, int width, int height, int[][][] constraints) {
         Model model = new Model("Nonogram");
         BoolVar[][] cells = model.boolVarMatrix("c", height, width);
+
         for (int i = 0; i < height; i++) {
             if (method.equals("regexp")) {
                 regexpConstraints(cells[i], constraints[0][i], model);
