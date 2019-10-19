@@ -1,12 +1,110 @@
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.List;
 
-public class BrutForceSolver {
-    public static boolean brutForceMethod(int width, int height, int[][][] constraints) {
+public class OurSolver {
+    public static boolean ourMethod(String method, int width, int height, int[][][] constraints) {
         List<List<BitSet>> cols, rows;
-        rows = getCandidates(constraints[0], height);
         cols = getCandidates(constraints[1], width);
+        rows = null;
+        boolean result = false;
+        switch (method) {
+            case "brutforce":
+                result = brutforceMethod(cols, width, height, constraints[0]);
+                break;
+            case "reductive":
+                rows = getCandidates(constraints[0], height);
+                result = reductiveMethod(cols, rows);
+                break;
+        }
+
+        if (result && method == "reductive") {
+            System.out.println();
+            System.out.println();
+            for (List<BitSet> row : rows) {
+                for (int i = 0; i < cols.size(); i++)
+                    System.out.print(row.get(0).get(i) ? "##" : "  ");
+                System.out.println();
+            }
+            System.out.println();
+            System.out.println();
+        }
+
+        return result;
+    }
+
+    private static boolean brutforceMethod(List<List<BitSet>> cols, int width, int height, int[][] rowsConstraints) {
+        int testedPossibilities = 0;
+        List<BitSet[]> combinations = combine(cols);
+
+        for (BitSet[] comb : combinations) {
+            testedPossibilities++;
+            if (solved(comb, rowsConstraints, height)) {
+                for (int rowIndex = 0; rowIndex < height; rowIndex++) {
+                    for (BitSet c : comb) {
+                        System.out.print(c.get(rowIndex) ? "##" : "  ");
+                    }
+                    System.out.println("");
+                }
+                System.out.println("Possibilités parcourues : " + testedPossibilities);
+                return true;
+            }
+        }
+        System.out.println("Possibilités parcourues : " + testedPossibilities);
+        return false;
+    }
+
+    public static boolean solved(BitSet[] puzzle, int[][] rowsConstraints, int height) {
+        //Need to check rows constraints
+        //We go through the lines of puzzle
+        for (int rowIndex = 0; rowIndex < height; rowIndex++) {
+            /*
+            System.out.println("constraints : ");
+            for (int c : rowsConstraints[rowIndex]) {
+                System.out.print(c);
+            }
+            System.out.println("");
+             */
+            int constraintIndex = 0;
+            int adjacentTrue = 0;
+            for (BitSet col : puzzle) {
+                boolean currentValue = col.get(rowIndex);
+                //System.out.println("constraint : " + constraintIndex);
+                //System.out.println("currentValue : " + currentValue);
+                if (currentValue) {
+                    adjacentTrue++;
+                } else {
+                    if (adjacentTrue > 0) {
+                        if (constraintIndex >= rowsConstraints[rowIndex].length) {
+                            return false;
+                        }
+                        if (rowsConstraints[rowIndex][constraintIndex] != adjacentTrue) {
+                            return false;
+                        }
+                        constraintIndex++;
+                    }
+                    adjacentTrue = 0;
+                }
+            }
+            if (constraintIndex == 0 && rowsConstraints[rowIndex].length > 1) {
+                return false;
+            }
+            //System.out.println("constraint : " + constraintIndex);
+            //System.out.println("adjacentTrue : " + adjacentTrue);
+            if (adjacentTrue > 0) {
+                if (constraintIndex >= rowsConstraints[rowIndex].length) {
+                    return false;
+                }
+                if (rowsConstraints[rowIndex][constraintIndex] != adjacentTrue) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean reductiveMethod(List<List<BitSet>> cols, List<List<BitSet>> rows) {
         int numChanged;
         do {
             numChanged = reduceMutual(cols, rows);
@@ -14,19 +112,6 @@ public class BrutForceSolver {
                 return false;
             }
         } while (numChanged > 0);
-
-        /*
-        System.out.println();
-        System.out.println();
-        for (List<BitSet> row : rows) {
-            for (int i = 0; i < cols.size(); i++)
-                System.out.print(row.get(0).get(i) ? "##" : "  ");
-            System.out.println();
-        }
-        System.out.println();
-        System.out.println();
-         */
-
         return true;
     }
 
@@ -193,5 +278,47 @@ public class BrutForceSolver {
                 }
             }
         }
+    }
+
+    public static List<BitSet[]> combine(final List<List<BitSet>> containers) {
+        List<List<BitSet>> c = combineInternal(0, containers);
+        List<BitSet[]> r = new ArrayList<>();
+        for (List<BitSet> p : c) {
+            BitSet[] temp = new BitSet[p.size()];
+            for (int i = 0; i < p.size(); i++) {
+                temp[i] = p.get(i);
+            }
+            r.add(temp);
+        }
+        return r;
+    }
+
+    private static List<List<BitSet>> combineInternal(final int currentIndex, final List<List<BitSet>> containers) {
+        if (currentIndex == containers.size()) {
+            // Skip the items for the last container
+            final List<List<BitSet>> combinations = new ArrayList<>();
+            combinations.add(Collections.emptyList());
+            return combinations;
+        }
+
+        final List<List<BitSet>> combinations = new ArrayList<>();
+        List<BitSet> containerItemList = containers.get(currentIndex);
+        // Get combination from next index
+        final List<List<BitSet>> suffixList = combineInternal(currentIndex + 1, containers);
+
+        final int size = containerItemList.size();
+        for (int i = 0; i < size; i++) {
+            final BitSet containerItem = containerItemList.get(i);
+            if (suffixList != null) {
+                for (final List<BitSet> suffix : suffixList) {
+                    final List<BitSet> nextCombination = new ArrayList<>();
+                    nextCombination.add(containerItem);
+                    nextCombination.addAll(suffix);
+                    combinations.add(nextCombination);
+                }
+            }
+        }
+
+        return combinations;
     }
 }

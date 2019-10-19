@@ -54,14 +54,14 @@ public class Utils {
             }
             System.out.println(line);
         }
-
         int[][][] constraints = new int[][][]{linesConstraints, columnsConstraints};
+        /*
         for (int y = 0; y < height; y++) {
             String line = "";
             for (int i = 0; i < constraints[0][y].length; i++) {
                 line += constraints[0][y][i] + " ";
             }
-            //System.out.println(line);
+            System.out.println(line);
         }
         //System.out.println();
         for (int x = 0; x < width; x++) {
@@ -69,8 +69,9 @@ public class Utils {
             for (int i = 0; i < constraints[1][x].length; i++) {
                 line += constraints[1][x][i] + " ";
             }
-            //System.out.println(line);
+            System.out.println(line);
         }
+         */
         return constraints;
     }
 }

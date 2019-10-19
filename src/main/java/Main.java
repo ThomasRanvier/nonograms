@@ -1,23 +1,14 @@
 
 public class Main {
     public static void main(String[] args) {
-        int width = 8;
-        int height = 8;
+        int width = 6;
+        int height = 6;
         int[][][] constraints = Utils.generateNonogram(width, height, 0.5, 0);
 
-        /*
-        CSPSolver.cspMethod("regexp", width, height, constraints);
-
         long startTime = System.nanoTime();
-        if (CSPSolver.cspMethod("regexp", width, height, constraints)) {
-            long endTime = System.nanoTime();
-            System.out.println("Regexp method, solved in " + ((endTime - startTime) / 1000000000.0)  + " sec.");
-        } else {
-            System.out.println("Regexp method, failed");
-        }
-        */
-        CSPSolver.cspMethod("constructive", width, height, constraints);
-        long startTime = System.nanoTime();
+        System.out.println("");
+        System.out.println("");
+        System.out.println("Constructive method start");
         if (CSPSolver.cspMethod("constructive", width, height, constraints)) {
             long endTime = System.nanoTime();
             System.out.println("Constructive method, solved in " + ((endTime - startTime) / 1000000000.0)  + " sec.");
@@ -25,8 +16,11 @@ public class Main {
             System.out.println("Constructive method, failed");
         }
 
+        System.out.println("");
+        System.out.println("");
+        System.out.println("Brut force method start");
         startTime = System.nanoTime();
-        if (BrutForceSolver.brutForceMethod(width, height, constraints)) {
+        if (OurSolver.ourMethod("brutforce", width, height, constraints)) {
             long endTime = System.nanoTime();
             System.out.println("Brut force, solved in " + ((endTime - startTime) / 1000000000.0)  + " sec.");
         } else {

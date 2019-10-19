@@ -69,7 +69,7 @@ public class CSPSolver {
             }
         }
         if(model.getSolver().solve()){
-            //displayResult(cells);
+            displayResult(cells);
             return true;
         }
         return false;
