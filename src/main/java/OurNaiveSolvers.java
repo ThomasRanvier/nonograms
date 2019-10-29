@@ -3,12 +3,14 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 
-public class OurSolver {
+public class OurNaiveSolvers {
     public static boolean ourMethod(String method, int width, int height, int[][][] constraints) {
         List<List<BitSet>> cols, rows;
         cols = getCandidates(constraints[1], width);
         rows = null;
         boolean result = false;
+        BitSet[] puzzle = new BitSet[width];
+        int cols_candidates = 0;
         switch (method) {
             case "brutforce":
                 result = brutforceMethod(cols, width, height, constraints[0]);
@@ -16,22 +18,149 @@ public class OurSolver {
             case "reductive":
                 rows = getCandidates(constraints[0], height);
                 result = reductiveMethod(cols, rows);
+                result = brutforceMethod(cols, width, height, constraints[0]);
+                break;
+            case "backtrack_redu":
+                rows = getCandidates(constraints[0], height);
+                result = reductiveMethod(cols, rows);
+                for (List<BitSet> ci: cols) {
+                    cols_candidates += ci.size();
+                }
+                System.out.println("Total candidates : " + cols_candidates);
+                result = backtrackingMethod(cols, width, height, constraints[0], 0, puzzle);
+                /*
+                for (int rowIndex = 0; rowIndex < height; rowIndex++) {
+                    for (BitSet c : puzzle)
+                        System.out.print(c.get(rowIndex) ? "##" : "  ");
+                    System.out.println("");
+                }*/
+                break;
+            case "backtrack":
+                for (List<BitSet> ci: cols) {
+                    cols_candidates += ci.size();
+                }
+                System.out.println("Total candidates : " + cols_candidates);
+                result = backtrackingMethod(cols, width, height, constraints[0], 0, puzzle);
+                /*
+                for (int rowIndex = 0; rowIndex < height; rowIndex++) {
+                    for (BitSet c : puzzle)
+                        System.out.print(c.get(rowIndex) ? "##" : "  ");
+                    System.out.println("");
+                }*/
                 break;
         }
-
-        if (result && method == "reductive") {
-            System.out.println();
-            System.out.println();
-            for (List<BitSet> row : rows) {
-                for (int i = 0; i < cols.size(); i++)
-                    System.out.print(row.get(0).get(i) ? "##" : "  ");
-                System.out.println();
-            }
-            System.out.println();
-            System.out.println();
-        }
-
         return result;
+    }
+
+    private static boolean backtrackingMethod(List<List<BitSet>> cols, int width, int height, int[][] rowsConstraints, int colIndex, BitSet[] puzzle) {
+        //Select premier candidat de colonne en cours
+        //Si candidat ne casse pas les contraintes, colonne en cours ++ et on rappelle la methode, si derniere colonne : return true
+        //Sinon on return false
+        if (colIndex >= width) {
+            return true;
+        }
+        for (int i = 0; i < cols.get(colIndex).size(); i++) {
+            puzzle[colIndex] = (BitSet) cols.get(colIndex).get(i).clone();
+            for (int j = colIndex + 1; j < width; j++) {
+                puzzle[j] = null;
+            }
+            /*
+            System.out.println("----");
+            System.out.println("cand " + i);
+            System.out.println("----");
+            System.out.println("cand");
+            for (int rowIndex = 0; rowIndex < height; rowIndex++) {
+                for (BitSet c : cols.get(colIndex)) {
+                    if (c != null)
+                        System.out.print(c.get(rowIndex) ? "##" : "  ");
+                }
+                System.out.println("");
+            }
+            System.out.println("----");
+            System.out.println("----");
+            System.out.println("puzzle");
+            for (int rowIndex = 0; rowIndex < height; rowIndex++) {
+                for (BitSet c : puzzle) {
+                    if (c != null)
+                        System.out.print(c.get(rowIndex) ? "##" : "  ");
+                }
+                System.out.println("");
+            }
+            System.out.println("----");
+             */
+            if (!brokenConstraints(puzzle, rowsConstraints, width, height)) {
+                //System.out.println("Not broken constraints");
+                if (backtrackingMethod(cols, width, height, rowsConstraints, colIndex + 1, puzzle)) {
+                    //System.out.println("True");
+                    return true;
+                } else {
+                    //System.out.println("False");
+                }
+            } else {
+                //System.out.println("Broken constraints");
+            }
+        }
+        //System.out.println("Hey");
+        return false;
+    }
+
+    public static boolean brokenConstraints(BitSet[] puzzle, int[][] rowsConstraints, int width, int height) {
+        for (int rowIndex = 0; rowIndex < height; rowIndex++) {
+            /*
+            System.out.println("constraints : ");
+            for (int c : rowsConstraints[rowIndex]) {
+                System.out.print(c + " ");
+            }
+            System.out.println("");*/
+            int constraintIndex = 0;
+            int adjacentTrue = 0;
+            boolean breaking = false;
+            for (int c =  0; c < width; c++) {
+                //System.out.println("constraint : " + constraintIndex);
+                if (puzzle[c] == null) {
+                    //System.out.println("Null");
+                    //Tous les candidats suivant le sont aussi
+                    //Vérifier que ça laisse la place de remplir potentiellement les contraintes avec les suivants
+                    int neededPlace = -1;
+                    for (int i = constraintIndex; i < rowsConstraints[rowIndex].length; i++)
+                        neededPlace += rowsConstraints[rowIndex][i] + 1;
+                    neededPlace -= adjacentTrue;
+                    //System.out.println("neededPlace : " + neededPlace);
+                    //System.out.println("width - c : " + (width - c));
+                    if (neededPlace > width - c)
+                        return true;
+                    breaking = true;
+                    break;
+                }
+                boolean currentValue = puzzle[c].get(rowIndex);
+                //System.out.println("currentValue : " + currentValue);
+                if (currentValue) {
+                    adjacentTrue++;
+                } else {
+                    if (adjacentTrue > 0) {
+                        if (constraintIndex >= rowsConstraints[rowIndex].length)
+                            return true;
+                        if (rowsConstraints[rowIndex][constraintIndex] > adjacentTrue)
+                            return true;
+                        constraintIndex++;
+                    }
+                    adjacentTrue = 0;
+                }
+            }
+            if (!breaking) {
+                if (constraintIndex == 0 && rowsConstraints[rowIndex].length > 1)
+                    return true;
+                //System.out.println("constraint : " + constraintIndex);
+                //System.out.println("adjacentTrue : " + adjacentTrue);
+                if (adjacentTrue > 0) {
+                    if (constraintIndex >= rowsConstraints[rowIndex].length)
+                        return true;
+                    if (rowsConstraints[rowIndex][constraintIndex] != adjacentTrue)
+                        return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static boolean brutforceMethod(List<List<BitSet>> cols, int width, int height, int[][] rowsConstraints) {
@@ -42,9 +171,8 @@ public class OurSolver {
             testedPossibilities++;
             if (solved(comb, rowsConstraints, height)) {
                 for (int rowIndex = 0; rowIndex < height; rowIndex++) {
-                    for (BitSet c : comb) {
+                    for (BitSet c : comb)
                         System.out.print(c.get(rowIndex) ? "##" : "  ");
-                    }
                     System.out.println("");
                 }
                 System.out.println("Possibilités parcourues : " + testedPossibilities);
@@ -76,29 +204,24 @@ public class OurSolver {
                     adjacentTrue++;
                 } else {
                     if (adjacentTrue > 0) {
-                        if (constraintIndex >= rowsConstraints[rowIndex].length) {
+                        if (constraintIndex >= rowsConstraints[rowIndex].length)
                             return false;
-                        }
-                        if (rowsConstraints[rowIndex][constraintIndex] != adjacentTrue) {
+                        if (rowsConstraints[rowIndex][constraintIndex] != adjacentTrue)
                             return false;
-                        }
                         constraintIndex++;
                     }
                     adjacentTrue = 0;
                 }
             }
-            if (constraintIndex == 0 && rowsConstraints[rowIndex].length > 1) {
+            if (constraintIndex == 0 && rowsConstraints[rowIndex].length > 1)
                 return false;
-            }
             //System.out.println("constraint : " + constraintIndex);
             //System.out.println("adjacentTrue : " + adjacentTrue);
             if (adjacentTrue > 0) {
-                if (constraintIndex >= rowsConstraints[rowIndex].length) {
+                if (constraintIndex >= rowsConstraints[rowIndex].length)
                     return false;
-                }
-                if (rowsConstraints[rowIndex][constraintIndex] != adjacentTrue) {
+                if (rowsConstraints[rowIndex][constraintIndex] != adjacentTrue)
                     return false;
-                }
             }
         }
         return true;
@@ -107,40 +230,67 @@ public class OurSolver {
     private static boolean reductiveMethod(List<List<BitSet>> cols, List<List<BitSet>> rows) {
         int numChanged;
         do {
-            numChanged = reduceMutual(cols, rows);
-            if (numChanged == -1) {
+            numChanged = reduceMutual(rows, cols);
+            if (numChanged == -1)
                 return false;
-            }
         } while (numChanged > 0);
         return true;
     }
 
     private static int reduceMutual(List<List<BitSet>> rows, List<List<BitSet>> cols) {
+        //System.out.println("");
+        //System.out.println("");
+        //System.out.println("reduce(cols, rows)");
         int countRemoved1 = reduce(cols, rows);
         if (countRemoved1 == -1)
             return -1;
 
+        //System.out.println("");
+        //System.out.println("");
+        //System.out.println("reduce(rows, cols)");
         int countRemoved2 = reduce(rows, cols);
         if (countRemoved2 == -1)
             return -1;
 
+        //System.out.println("");
+        //System.out.println("");
+        //System.out.println("count : " + (countRemoved1 + countRemoved2));
         return countRemoved1 + countRemoved2;
     }
 
     private static int reduce(List<List<BitSet>> a, List<List<BitSet>> b) {
         int countRemoved = 0;
-        for (int i = 0; i < a.size(); i++) {
+        for (int i = 0; i < a.size(); i++) {//i : index de la ligne ou colonne en cours
             BitSet commonOn = new BitSet();
-            commonOn.set(0, b.size());
+            commonOn.set(1, b.size());
             BitSet commonOff = new BitSet();
+            commonOn.set(0, b.size());
+            //System.out.println("I : " + i);
             for (BitSet candidate : a.get(i)) {
                 commonOn.and(candidate);
                 commonOff.or(candidate);
+                //System.out.println("Cand : " + candidate);
             }
-            for (int j = 0; j < b.size(); j++) {
+            //System.out.println("CommonOn : " + commonOn);
+            //System.out.println("CommonOff : " + commonOff);
+            for (int j = 0; j < b.size(); j++) {//j : index de la colonne ou ligne en cours
+                //System.out.println("    J : " + j);
                 final int fi = i, fj = j;
-                if (b.get(j).removeIf(cnd -> (commonOn.get(fj) && !cnd.get(fi)) || (!commonOff.get(fj) && cnd.get(fi))))
-                    countRemoved++;
+                for (int k = b.get(j).size() - 1; k >= 0; k--) {
+                    //System.out.println("    Cand : " + b.get(j).get(k));
+                    boolean rem = false;
+                    if (!b.get(j).get(k).get(i) && commonOn.get(j))
+                        rem = true;
+                    if (b.get(j).get(k).get(i) && !commonOff.get(j))
+                        rem = true;
+                    if (rem) {
+                        b.get(j).remove(k);
+                        //System.out.println("    remove");
+                        countRemoved++;
+                    }
+                }
+                //if (b.get(j).removeIf(cnd -> (commonOn.get(fj) && !cnd.get(fi)) || (!commonOff.get(fj) && cnd.get(fi))))
+                //    countRemoved++;
                 if (b.get(j).isEmpty())
                     return -1;
             }

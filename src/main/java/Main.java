@@ -1,53 +1,36 @@
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        int width = 40;
-        int height = 40;
-        BufferedWriter writer = new BufferedWriter(new FileWriter("results.txt", true));
+        int width = 17;
+        int height = 17;
+        //BufferedWriter writer = new BufferedWriter(new FileWriter("results.txt", true));
 
         for (int i = 0; i < 1; i++) {
-            int[][][] constraints = Utils.generateNonogram(width, height, 0.8, 0);
-
+            int[][][] constraints = Utils.generateNonogram(width, height, 0.4, 0);
+            System.out.println("");
+            System.out.println("");
+            System.out.println("CSP solver, constructive method start");
             long startTime = System.nanoTime();
-            System.out.println("");
-            System.out.println("");
-            System.out.println("Constructive method start");
-            if (CSPSolver.cspMethod("constructive", width, height, constraints)) {
+            if (CSPSolver.solve(width, height, constraints)) {
                 long endTime = System.nanoTime();
-                System.out.println("Constructive method, solved in " + ((endTime - startTime) / 1000000000.0)  + " sec.");
-                String s = "\n" + ((endTime - startTime) / 1000000000.0);
-                writer.append(s);
+                System.out.println("CSP solver, constructive method, solved in " + ((endTime - startTime) / 1000000000.0)  + " sec.");
+                //writer.write(((endTime - startTime) / 1000000000.0) + "\n");
             } else {
-                System.out.println("Constructive method, failed");
+                System.out.println("CSP solver, constructive method, failed");
             }
-/*
             System.out.println("");
             System.out.println("");
-            System.out.println("Reductive method start");
+            System.out.println("Our good method start");
             startTime = System.nanoTime();
-            if (OurSolver.ourMethod("reductive", width, height, constraints)) {
+            if (OurGoodSolver.solve(constraints, width, height)) {
                 long endTime = System.nanoTime();
-                System.out.println("Reductive, solved in " + ((endTime - startTime) / 1000000000.0)  + " sec.");
-                writer.write(((endTime - startTime) / 1000000000.0) + "\n");
+                System.out.println("Our good method, solved in " + ((endTime - startTime) / 1000000000.0)  + " sec.");
+                //writer.write(((endTime - startTime) / 1000000000.0) + "\n");
             } else {
-                System.out.println("Reductive, failed");
+                System.out.println("Our good method, failed");
             }
-
-            System.out.println("");
-            System.out.println("");
-            System.out.println("Brut force method start");
-            startTime = System.nanoTime();
-            if (OurSolver.ourMethod("brutforce", width, height, constraints)) {
-                long endTime = System.nanoTime();
-                System.out.println("Brut force, solved in " + ((endTime - startTime) / 1000000000.0)  + " sec.");
-                writer.write(((endTime - startTime) / 1000000000.0) + "\n");
-            } else {
-                System.out.println("Brut force, failed");
-            }*/
         }
-        writer.close();
+        //writer.close();
     }
 }

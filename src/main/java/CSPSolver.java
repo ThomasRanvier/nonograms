@@ -5,18 +5,6 @@ import org.chocosolver.solver.variables.BoolVar;
 import org.chocosolver.util.tools.ArrayUtils;
 
 public class CSPSolver {
-    private static void regexpConstraints(BoolVar[] cells, int[] rest, Model model) {
-        StringBuilder regexp = new StringBuilder("0*");
-        int m = rest.length;
-        for (int i = 0; i < m; i++) {
-            regexp.append('1').append('{').append(rest[i]).append('}');
-            regexp.append('0');
-            regexp.append(i == m - 1 ? '*' : '+');
-        }
-        IAutomaton auto = new FiniteAutomaton(regexp.toString());
-        model.regular(cells, auto).post();
-    }
-
     private static void constructiveConstraints(BoolVar[] cells, int[] seq, Model model) {
         FiniteAutomaton auto = new FiniteAutomaton();
         int si = auto.addState();
@@ -51,26 +39,18 @@ public class CSPSolver {
         model.regular(cells, auto).post();
     }
 
-    public static boolean cspMethod(String method, int width, int height, int[][][] constraints) {
+    public static boolean solve(int width, int height, int[][][] constraints) {
         Model model = new Model("Nonogram");
         BoolVar[][] cells = model.boolVarMatrix("c", height, width);
 
         for (int i = 0; i < height; i++) {
-            if (method.equals("regexp")) {
-                regexpConstraints(cells[i], constraints[0][i], model);
-            } else {
-                constructiveConstraints(cells[i], constraints[0][i], model);
-            }
+            constructiveConstraints(cells[i], constraints[0][i], model);
         }
         for (int j = 0; j < width; j++) {
-            if (method.equals("regexp")) {
-                regexpConstraints(ArrayUtils.getColumn(cells, j), constraints[1][j], model);
-            } else {
-                constructiveConstraints(ArrayUtils.getColumn(cells, j), constraints[1][j], model);
-            }
+            constructiveConstraints(ArrayUtils.getColumn(cells, j), constraints[1][j], model);
         }
         if(model.getSolver().solve()){
-            displayResult(cells);
+            //displayResult(cells);
             return true;
         }
         return false;
