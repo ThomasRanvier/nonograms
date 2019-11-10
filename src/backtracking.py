@@ -5,11 +5,11 @@ def calc_perms(r, cur, spaces, perm, shift, res):
     if cur == len(row_rules[r]):
         if (grid[r] & perm) == grid[r]:
             res.append(perm)
-            return
-    while spaces >= 0:
-        calc_perms(r, cur + 1, spaces, perm | (((1 << row_rules[r][cur]) - 1) << shift), shift + row_rules[r][cur] + 1, res);
-        shift += 1;
-        spaces -= 1;
+    else:
+        while spaces >= 0:
+            calc_perms(r, cur + 1, spaces, perm | (((1 << row_rules[r][cur]) - 1) << shift), shift + row_rules[r][cur] + 1, res);
+            shift += 1;
+            spaces -= 1;
 
 def update_cols(row):
     global col_val, col_ix, mask, val, grid, row_perms
@@ -52,7 +52,7 @@ def dfs(row):
     for i in range(len(row_perms[row])):
         if (row_perms[row][i] & mask[row]) != val[row]:
             continue
-        grid[row] = row_perms[row][i];
+        grid[row] = row_perms[row][i]
         update_cols(row)
         if dfs(row + 1):
             return True
