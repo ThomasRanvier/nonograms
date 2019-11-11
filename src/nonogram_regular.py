@@ -172,7 +172,7 @@ def make_transition_matrix(pattern):
     if c < num_states - 1:
       c += 1
       tmp[c] = 0
-  print(tmp)
+  #print(tmp)
 
   t_matrix[num_states - 1][0] = num_states
   t_matrix[num_states - 1][1] = 0
@@ -190,12 +190,11 @@ def make_transition_matrix(pattern):
           t_matrix[i][0] = i + 2
           t_matrix[i][1] = 0
 
-  print('The states for pattern ' + str(pattern) + ':')
-  for i in range(num_states):
-      for j in range(2):
-          print(t_matrix[i][j])
-      print()
-  print()
+  #for i in range(num_states):
+  #    for j in range(2):
+  #        print(t_matrix[i][j])
+  #    print()
+  #print()
 
   return t_matrix
 

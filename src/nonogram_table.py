@@ -257,7 +257,7 @@ def main(rows, row_rule_len, row_rules,
   #
   for i in range(rows):
     check_rule([row_rules[i][j] for j in range(row_rule_len)],
-               [board[i, j] for j in range(cols)])
+               [board[i, j] for i in range(cols)])
 
   for j in range(cols):
     check_rule([col_rules[j][k] for k in range(col_rule_len)],

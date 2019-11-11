@@ -43,7 +43,7 @@
 from __future__ import print_function
 import sys
 
-from ortools.constraint_solver import pywrapcp
+from ortools.sat.python import cp_model
 
 
 #
@@ -69,7 +69,6 @@ def make_transition_tuples(pattern):
   for pattern_index in range(p_len):
     tmp.extend([1] * pattern[pattern_index])
     tmp.append(0)
-  #print(tmp)
 
   for i in range(num_states):
     state = i + 1
@@ -89,26 +88,20 @@ def make_transition_tuples(pattern):
 #
 # check each rule by creating an automaton and transition constraint.
 #
-def check_rule(rules, y):
+def check_rule(rules, y, model):
   cleaned_rule = [rules[i] for i in range(len(rules)) if rules[i] > 0]
-  #print(cleaned_rule)
   (transition_tuples, last_state) = make_transition_tuples(cleaned_rule)
-  #print(transition_tuples)
 
   initial_state = 1
   accepting_states = [last_state]
 
-  solver = y[0].solver()
-  solver.Add(solver.TransitionConstraint(y,
-                                         transition_tuples,
-                                         initial_state,
-                                         accepting_states))
+  model.AddAutomaton(y, initial_state, accepting_states, transition_tuples)
 
 
 def main(rows, row_rule_len, row_rules, cols, col_rule_len, col_rules):
 
-  # Create the solver.
-  solver = pywrapcp.Solver('Nonogram')
+  # Create the model.
+  model = cp_model.CpModel()
 
   #
   # variables
@@ -116,8 +109,7 @@ def main(rows, row_rule_len, row_rules, cols, col_rule_len, col_rules):
   board = {}
   for i in range(rows):
     for j in range(cols):
-      #board[i, j] = solver.IntVar(0, 1, 'board[%i, %i]' % (i, j))
-      board[i, j] = solver.BoolVar('board[%i, %i]' % (i, j))
+      board[i, j] = model.NewIntVar(0, 1, 'board[%i, %i]' % (i, j))
 
   board_flat = [board[i, j] for i in range(rows) for j in range(cols)]
 
@@ -139,49 +131,28 @@ def main(rows, row_rule_len, row_rules, cols, col_rule_len, col_rules):
   # constraints
   #
   for i in range(rows):
-    check_rule(row_rules[i], [board[i, j] for j in range(cols)])
+    check_rule(row_rules[i], [board[i, j] for j in range(cols)], model)
 
   for j in range(cols):
-    check_rule(col_rules[j], [board[i, j] for i in range(rows)])
+    check_rule(col_rules[j], [board[i, j] for i in range(rows)], model)
 
   #
   # solution and search
   #
-  parameters = pywrapcp.DefaultPhaseParameters()
-  parameters.heuristic_period = 200000
+  solver = cp_model.CpSolver()
+  status = solver.Solve(model)
 
-  db = solver.DefaultPhase(board_label, parameters)
-
-  print('before solver, wall time = ', solver.WallTime(), 'ms')
-  solver.NewSearch(db)
-
-  num_solutions = 0
-  while solver.NextSolution():
-    print()
-    num_solutions += 1
+  if status == cp_model.FEASIBLE:
     for i in range(rows):
-      row = [board[i, j].Value() for j in range(cols)]
+      row = [solver.Value(board[i, j]) for j in range(cols)]
       row_pres = []
       for j in row:
-        if j:
+        if j == 1:
           row_pres.append('#')
         else:
           row_pres.append(' ')
       print('  ', ''.join(row_pres))
-
-    print()
-    print('  ', '-' * cols)
-
-    if num_solutions >= 2:
-      print('2 solutions is enough...')
-      break
-
-  solver.EndSearch()
-  print()
-  print('num_solutions:', num_solutions)
-  print('failures:', solver.Failures())
-  print('branches:', solver.Branches())
-  print('WallTime:', solver.WallTime(), 'ms')
+    print('WallTime:', solver.WallTime(), 'ms')
 
 
 #
